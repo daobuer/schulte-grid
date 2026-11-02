@@ -4,10 +4,10 @@
  * 只负责 DOM 渲染与用户输入采集，游戏规则全部在 game.js 中：
  *   - renderStats(snap)：根据游戏状态快照刷新统计条；
  *   - openMode(config)：打开模式选择弹框，确认后通过 handlers.confirm 回传；
- *   - showResult(result)：游戏完成后展示成绩，关闭时通过 handlers.resultClosed
- *     通知入口层自动重开一局。
+ *   - showResult(result)：游戏完成后展示成绩，点击再来一局时通过 handlers.restart 通知入口层自动重开一局。
  * ========================================================================== */
 import { SMALL_SCREEN_MAX_SIZE, SIZE_OPTIONS, TYPE_OPTIONS, isSmallScreen } from './config';
+import { game } from './game';
 
   export const ui = {
     // DOM 缓存
@@ -21,7 +21,7 @@ import { SMALL_SCREEN_MAX_SIZE, SIZE_OPTIONS, TYPE_OPTIONS, isSmallScreen } from
 
     /**
      * 缓存 DOM 并绑定按钮 / 遮罩 / 键盘事件（仅调用一次）。
-     * @param {{confirm:function, restart:function, resultClosed:function}} handlers
+     * @param {{confirm:function, restart:function, getConfig:function}} handlers
      */
     init: function (handlers) {
       this.handlers = handlers;
@@ -34,7 +34,6 @@ import { SMALL_SCREEN_MAX_SIZE, SIZE_OPTIONS, TYPE_OPTIONS, isSmallScreen } from
         correct: $('statCorrect'),
         wrong: $('statWrong'),
         timeCard: document.querySelector('.stat-card--accent'),
-        hint: $('boardHint'),
         btnOpenMode: $('btnOpenMode'),
         btnRestart: $('btnRestart'),
         modeModal: $('modeModal'),
@@ -59,25 +58,9 @@ import { SMALL_SCREEN_MAX_SIZE, SIZE_OPTIONS, TYPE_OPTIONS, isSmallScreen } from
       this.els.btnRestart.addEventListener('click', function () {
         this.handlers.restart && this.handlers.restart();
       }.bind(this));
-      this.els.btnModeCancel.addEventListener('click', this.closeMode.bind(this));
+      this.els.btnModeCancel.addEventListener('click', this._cancelMode.bind(this));
       this.els.btnModeConfirm.addEventListener('click', this._confirmMode.bind(this));
       this.els.btnPlayAgain.addEventListener('click', this._closeResult.bind(this));
-
-      // 点击两个弹框的遮罩空白处关闭（结果框关闭即自动重开）
-      this.els.modeModal.addEventListener('click', function (e) {
-        if (e.target === this.els.modeModal) this.closeMode();
-      }.bind(this));
-      this.els.resultModal.addEventListener('click', function (e) {
-        if (e.target === this.els.resultModal) this._closeResult();
-      }.bind(this));
-
-      // Esc 关闭弹框
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-          if (!this.els.resultModal.hidden) this._closeResult();
-          else if (!this.els.modeModal.hidden) this.closeMode();
-        }
-      }.bind(this));
     },
 
     /* ------------------------------ 统计条 ------------------------------ */
@@ -113,11 +96,6 @@ import { SMALL_SCREEN_MAX_SIZE, SIZE_OPTIONS, TYPE_OPTIONS, isSmallScreen } from
       }
     },
 
-    /** 显示/隐藏画板底部“点击数字 1 开始计时”的提示 */
-    setHintHidden: function (hidden) {
-      this.els.hint.classList.toggle('is-hidden', hidden);
-    },
-
     /* ---------------------------- 模式选择弹框 ---------------------------- */
 
     /**
@@ -139,9 +117,15 @@ import { SMALL_SCREEN_MAX_SIZE, SIZE_OPTIONS, TYPE_OPTIONS, isSmallScreen } from
       this.els.modeModal.hidden = false;
     },
 
-    /** 关闭模式弹框（取消，不改变当局配置） */
-    closeMode: function () {
+    /** 关闭模式弹框 */
+    _closeMode: function () {
       this.els.modeModal.hidden = true;
+    },
+
+    /** 关闭模式弹框后立即启动游戏（取消，不改变当局配置） */
+    _cancelMode: function() {
+      this._closeMode();
+      this.handlers.restart && this.handlers.restart();
     },
 
     /**
@@ -156,7 +140,7 @@ import { SMALL_SCREEN_MAX_SIZE, SIZE_OPTIONS, TYPE_OPTIONS, isSmallScreen } from
         var label = this._makeRadio({
           name: 'opt-size',
           value: String(opt.value),
-          text: opt.label + (disabled ? '（不支持）' : ''),
+          text: opt.label,
           checked: this._draft.size === opt.value,
           disabled: disabled
         });
@@ -217,7 +201,7 @@ import { SMALL_SCREEN_MAX_SIZE, SIZE_OPTIONS, TYPE_OPTIONS, isSmallScreen } from
 
     /** 点击“确定”：回传选择结果并关闭弹框 @private */
     _confirmMode: function () {
-      this.closeMode();
+      this._closeMode();
       this.handlers.confirm && this.handlers.confirm({
         size: this._draft.size,
         type: this._draft.type
@@ -242,6 +226,6 @@ import { SMALL_SCREEN_MAX_SIZE, SIZE_OPTIONS, TYPE_OPTIONS, isSmallScreen } from
     _closeResult: function () {
       if (this.els.resultModal.hidden) return;
       this.els.resultModal.hidden = true;
-      this.handlers.resultClosed && this.handlers.resultClosed();
+      this.handlers.restart && this.handlers.restart();
     }
   };

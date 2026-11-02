@@ -57,13 +57,16 @@
   padding: 0;
 }
 
+html, body {
+  width: 100%;
+  height: 100%;
+}
+
 html {
   -webkit-text-size-adjust: 100%;
 }
 
 body {
-  min-height: 100vh;
-  min-height: 100dvh; /* 渐进增强：支持 dvh 的浏览器使用动态视口 */
   font-family: var(--font-cn);
   color: var(--text-main);
   /* 极淡的纸面渐变，避免大面积纯色的呆板 */
@@ -87,13 +90,12 @@ button {
    ========================================================================== */
 .app {
   width: min(100%, 680px);
+  height: 100%;
   margin: 0 auto;
   padding: 20px 20px 28px;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
   gap: 16px;
-  min-height: 100vh;
-  min-height: 100dvh; /* 渐进增强 */
 }
 
 .app-header {
@@ -105,7 +107,8 @@ button {
   font-size: 26px;
   font-weight: 700;
   letter-spacing: 2px;
-  display: inline-flex;
+  display: inline-grid;
+  grid-auto-flow: column;
   align-items: center;
   gap: 10px;
 }
@@ -143,9 +146,8 @@ button {
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
   padding: 10px 6px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: grid;
+  justify-items: center;
   gap: 2px;
   transition: background .2s var(--ease-out-back);
 }
@@ -198,7 +200,6 @@ button {
    4. 方格画板舞台：永远保持正方形并居中
    ========================================================================== */
 .board-stage {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -207,9 +208,10 @@ button {
 
 .board-frame {
   position: relative;
-  /* 宽 = 视口宽 92%、高度留白后、最大 620px 三者取最小，保证正方形完整可见 */
-  width: min(92vw, calc(100vh - 268px), 620px);
-  width: min(92vw, calc(100dvh - 268px), 620px); /* 渐进增强：支持 dvh 的浏览器使用动态视口 */
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
   aspect-ratio: 1 / 1;
   background: var(--bg-card);
   border-radius: 20px;
@@ -223,32 +225,6 @@ button {
   position: relative;
   border-radius: 12px;
   overflow: hidden;
-}
-
-/* 开始前的轻提示，首次点击后由 JS 隐藏 */
-.board-hint {
-  position: absolute;
-  left: 50%;
-  bottom: 18px;
-  transform: translateX(-50%);
-  background: rgba(31, 45, 45, .72);
-  color: #fff;
-  font-size: 13px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  white-space: nowrap;
-  pointer-events: none;
-  transition: opacity .25s ease;
-}
-
-.board-hint b {
-  color: var(--tiffany);
-  font-family: var(--font-num);
-  font-size: 15px;
-}
-
-.board-hint.is-hidden {
-  opacity: 0;
 }
 
 /* ==========================================================================
@@ -394,7 +370,9 @@ button {
    8. 底部操作按钮
    ========================================================================== */
 .actions {
-  display: flex;
+  display: inline-grid;
+  grid-auto-flow: column;
+  align-items: center;
   gap: 12px;
 }
 
@@ -415,7 +393,6 @@ button {
 }
 
 .btn--primary {
-  flex: 1.4;
   background: var(--tiffany);
   color: #fff;
   box-shadow: 0 6px 16px rgba(10, 186, 181, .28);
@@ -426,7 +403,6 @@ button {
 }
 
 .btn--ghost {
-  flex: 1;
   background: var(--bg-card);
   color: var(--tiffany-dark);
   border: 1.5px solid var(--tiffany);
@@ -436,16 +412,15 @@ button {
   background: var(--tiffany-soft);
 }
 
-.btn--block {
-  flex: 1;
-}
-
 /* ==========================================================================
    9. 弹框通用：遮罩淡入 + 内容上移归位
    ========================================================================== */
 .modal-mask {
   position: fixed;
-  inset: 0;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   z-index: 100;
   display: flex;
   align-items: center;
@@ -464,8 +439,7 @@ button {
 
 .modal {
   width: min(100%, 460px);
-  max-height: calc(100vh - 40px);
-  max-height: calc(100dvh - 40px); /* 渐进增强 */
+  max-height: calc(100% - 40px);
   overflow-y: auto;
   background: var(--bg-card);
   border-radius: var(--radius-modal);
@@ -492,7 +466,8 @@ button {
 }
 
 .modal__footer {
-  display: flex;
+  display: grid;
+  grid-auto-flow: column;
   gap: 12px;
   margin-top: 24px;
 }
@@ -514,15 +489,21 @@ button {
 }
 
 .opt-group__options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
 }
+
+.opt-group__options--type {
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+}
+
 
 /* 单个选项：隐藏原生 input，用 .radio-dot 自绘 */
 .opt-item {
-  display: inline-flex;
+  display: inline-grid;
+  grid-auto-flow: column;
   align-items: center;
+  grid-template-columns: auto 1fr;
   gap: 8px;
   font-size: 17px;
   font-weight: 600;
@@ -555,7 +536,10 @@ button {
 .radio-dot::after {
   content: "";
   position: absolute;
-  inset: 0;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   margin: auto;
   width: 9px;
   height: 9px;

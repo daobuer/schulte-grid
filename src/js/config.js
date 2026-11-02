@@ -79,8 +79,7 @@
    * @returns {boolean} true 表示小屏，格子数量最大只能选 6×6
    */
   export const isSmallScreen = function () {
-    var dpr = window.devicePixelRatio || 1;
-    var physicalMin = Math.min(window.innerWidth || 0, window.innerHeight || 0) * dpr;
+    var physicalMin = Math.min(window.innerWidth || 0, window.innerHeight || 0);
     return physicalMin < SMALL_SCREEN_PX;
   };
 

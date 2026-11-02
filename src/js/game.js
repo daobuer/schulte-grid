@@ -4,9 +4,9 @@
  * 一局游戏的生命周期：
  *
  *   newGame(config)
- *       │  重置统计、渲染方格，等待首次点击
+ *       │  重置统计、渲染方格，等待游戏开始
  *       ▼
- *   首次点击 ── 开始计时（rAF 循环刷新用时）
+ *   游戏开始 ── 开始计时（rAF 循环刷新用时）
  *       │
  *       ▼
  *   每次点击格子
@@ -16,7 +16,7 @@
  *       ▼
  *   找完全部数字 → 停止计时，结果用时四舍五入到整数秒，触发 finish
  *
- * 与界面层完全解耦：通过 on(event, fn) 订阅 'stats' / 'firstClick' / 'finish'。
+ * 与界面层完全解耦：通过 on(event, fn) 订阅 'stats' / / 'finish'。
  * ========================================================================== */
 import { NUMBER_COLORS, PEBBLE_COLORS, shuffle } from './config';
 import { audio } from './audio';
@@ -30,7 +30,7 @@ import { boards } from './boards';
 
     _listeners: {},      // 事件监听器表
     _rafId: 0,           // 计时刷新的 requestAnimationFrame 句柄
-    _startAt: 0,         // 首次点击的时间戳（ms）
+    _startAt: 0,         // 游戏开始的时间戳（ms）
     _elapsed: 0,         // 本局已用时间（ms）
 
     /**
@@ -52,7 +52,7 @@ import { boards } from './boards';
 
     /**
      * 订阅游戏事件。
-     * @param {'stats'|'firstClick'|'finish'} event 事件名
+     * @param {'stats'|'finish'} event 事件名
      * @param {function} fn 回调
      */
     on: function (event, fn) {
@@ -82,7 +82,7 @@ import { boards } from './boards';
         wrong: 0,         // 总错误次数
         streak: 0,        // 当前连续正确步数
         maxStreak: 0,     // 本局最高连对
-        started: false,   // 是否已首次点击
+        started: false,   // 游戏是否已开始
         finished: false,
         elapsedMs: 0      // 完成时的总用时（ms）
       };
@@ -101,6 +101,18 @@ import { boards } from './boards';
     },
 
     /**
+     * 开启游戏
+     */
+    startGame: function() {
+      // 首次有效点击：启动计时
+      var st = this.state;
+      if (!st.started) {
+        st.started = true;
+        this._startTimer();
+      }
+    },
+
+    /**
      * 处理一次格子点击（游戏判定的核心）。
      * @param {number} num 被点击的数字
      * @param {HTMLElement|SVGGElement} cell 被点击的格子根元素
@@ -109,13 +121,6 @@ import { boards } from './boards';
       var st = this.state;
       if (!st || st.finished) return;
       if (cell.classList.contains('is-found')) return; // 已找到的格子不再响应
-
-      // 首次有效点击：启动计时
-      if (!st.started) {
-        st.started = true;
-        this._startTimer();
-        this._emit('firstClick');
-      }
 
       if (num === st.target) {
         this._onCorrect(num, cell);
@@ -201,7 +206,7 @@ import { boards } from './boards';
 
     /* ---------------- 计时器：rAF 驱动，约每帧刷新用时 ---------------- */
 
-    /** @private */
+    /** @private 开始计时 */
     _startTimer: function () {
       this._startAt = performance.now();
       var tick = function () {

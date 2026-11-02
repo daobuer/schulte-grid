@@ -65,8 +65,6 @@
       <main class="board-stage">
         <div class="board-frame">
           <div id="board" class="board" aria-label="舒尔特方格画板"></div>
-          <!-- 开始前的引导遮罩：首次点击数字后自动消失 -->
-          <div class="board-hint" id="boardHint">点击数字 <b>1</b> 开始计时</div>
         </div>
       </main>
 
@@ -97,15 +95,15 @@
         <!-- 选项组二：方格类型 -->
         <fieldset class="opt-group">
           <legend class="opt-group__label">方格类型</legend>
-          <div class="opt-group__options" id="typeOptions">
+          <div class="opt-group__options opt-group__options--type" id="typeOptions">
             <!-- 经典方格 / 不规则 / 鹅卵石 / 蜂巢 / 圆环 由 js/ui.js 动态渲染 -->
           </div>
         </fieldset>
 
         <!-- 弹框底部操作按钮 -->
         <div class="modal__footer">
-          <button type="button" class="btn btn--ghost btn--block" id="btnModeCancel">取消</button>
-          <button type="button" class="btn btn--primary btn--block" id="btnModeConfirm">确定</button>
+          <button type="button" class="btn btn--ghost" id="btnModeCancel">取消</button>
+          <button type="button" class="btn btn--primary" id="btnModeConfirm">开始</button>
         </div>
       </div>
     </div>
@@ -136,7 +134,7 @@
           </div>
         </dl>
 
-        <button type="button" class="btn btn--primary btn--block" id="btnPlayAgain">再来一局</button>
+        <button type="button" class="btn btn--primary" id="btnPlayAgain">再来一局</button>
         <p class="result-tip">关闭弹框将自动按当前模式重新开始</p>
       </div>
     </div>

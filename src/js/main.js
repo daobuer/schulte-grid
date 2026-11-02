@@ -3,7 +3,7 @@
  *
  * 负责：
  *   1. 初始化音效池、游戏核心与界面层；
- *   2. 串联事件：游戏统计 → 统计条；首次点击 → 隐藏提示；
+ *   2. 串联事件：游戏统计 → 统计条；游戏开始 → 计时器卡片高亮显示时间；
  *      完成 → 结果弹框；结果弹框关闭 → 按当前模式自动重开；
  *   3. 首屏自动弹出模式选择（取消则使用默认 4×4 + 经典方格）；
  *   4. 监听视口变化（防抖），小屏状态变化时即时刷新弹框中的禁用选项。
@@ -33,18 +33,16 @@ import { ui } from './ui';
       confirm: function (config) {
         startGame(config);
       },
-      // “重新开始”按钮：沿用当前配置
+
+      // 模式弹框“取消”、“重新开始”按钮：沿用当前配置立即重开游戏
       restart: function () {
         startGame(currentConfig);
       },
+
       // 打开模式弹框时读取当前生效配置
       getConfig: function () {
         return currentConfig;
       },
-      // 结果弹框关闭（按钮 / 遮罩 / Esc）：自动按当前模式重开
-      resultClosed: function () {
-        startGame(currentConfig);
-      }
     });
 
     /* ---------- 订阅游戏事件 ---------- */
@@ -52,31 +50,34 @@ import { ui } from './ui';
       ui.renderStats(snap);
     });
 
-    game.on('firstClick', function () {
-      ui.setHintHidden(true);
-    });
-
     game.on('finish', function (result) {
-      ui.setHintHidden(true);
       ui.showResult(result);
     });
 
     /**
-     * 按给定配置开启新局：小屏设备自动把阶数限制在 6×6 以内。
+     * 按给定配置新局：小屏设备自动把阶数限制在 6×6 以内。
      * @param {{size:number, type:string}} config
      */
-    function startGame(config) {
+    function renderGame(config) {
       var size = config.size;
       if (isSmallScreen() && size > SMALL_SCREEN_MAX_SIZE) {
         size = SMALL_SCREEN_MAX_SIZE;
       }
       currentConfig = { size: size, type: config.type };
-      ui.setHintHidden(false);
       game.newGame(currentConfig);
     }
 
+    /**
+     * 按照配置立即开始游戏 —— 应用配置 + 开始游戏计时
+     * @param {{size:number, type:string}} config
+     */
+    function startGame(config) {
+      renderGame(config);
+      game.startGame();
+    }
+
     /* ---------- 首屏：先用默认配置起局，再自动弹出模式选择 ---------- */
-    startGame(currentConfig);
+    renderGame(currentConfig);
     ui.openMode(currentConfig);
 
     /* ---------- 视口变化：小屏判定改变时刷新弹框选项（300ms 防抖）---------- */
