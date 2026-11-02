@@ -83,7 +83,8 @@ import { boards } from './boards';
         streak: 0,        // 当前连续正确步数
         maxStreak: 0,     // 本局最高连对
         started: false,   // 游戏是否已开始
-        finished: false,
+        paused: false,    // 游戏是否已暂停
+        finished: false,  // 游戏是否已结束
         elapsedMs: 0      // 完成时的总用时（ms）
       };
       this._elapsed = 0;
@@ -103,7 +104,7 @@ import { boards } from './boards';
     /**
      * 开启游戏
      */
-    startGame: function() {
+    startGame: function () {
       // 首次有效点击：启动计时
       var st = this.state;
       if (!st.started) {
@@ -113,13 +114,27 @@ import { boards } from './boards';
     },
 
     /**
+     * 暂停游戏
+     */
+    pauseGame: function () {
+      this._pauseTimer();
+    },
+
+    /**
+     * 重启游戏
+     */
+    resumeGame: function () {
+      this._resumeTimer();
+    },
+
+    /**
      * 处理一次格子点击（游戏判定的核心）。
      * @param {number} num 被点击的数字
      * @param {HTMLElement|SVGGElement} cell 被点击的格子根元素
      */
     handleClick: function (num, cell) {
       var st = this.state;
-      if (!st || st.finished) return;
+      if (!st || st.finished || st.paused) return;
       if (cell.classList.contains('is-found')) return; // 已找到的格子不再响应
 
       if (num === st.target) {
@@ -206,21 +221,40 @@ import { boards } from './boards';
 
     /* ---------------- 计时器：rAF 驱动，约每帧刷新用时 ---------------- */
 
-    /** @private 开始计时 */
-    _startTimer: function () {
-      this._startAt = performance.now();
+    /** @private 计时器 */
+    _tick: function () {
+      // 补偿，防止 游戏未开始、_startAt未赋值异常
+      this._startAt = this._startAt || performance.now();
       var tick = function () {
         this._elapsed = performance.now() - this._startAt;
         this.state.elapsedMs = this._elapsed;
         this._emitStats();
-        if (!this.state.finished) {
+        if (!this.state.finished || !this.state.paused) {
           this._rafId = requestAnimationFrame(tick);
         }
       }.bind(this);
       this._rafId = requestAnimationFrame(tick);
     },
 
-    /** @private */
+    /** @private 开始计时 */
+    _startTimer: function () {
+      this._startAt = performance.now();
+      this._tick();
+    },
+
+    /** @private 暂停计时 */
+    _pauseTimer: function () {
+      this.state.paused = true;
+      this._stopTimer();
+    },
+  
+    /** @private 恢复计时 */
+    _resumeTimer: function () {
+      this.state.paused = false;
+      this._tick();
+    },
+
+    /** @private 停止计时 */
     _stopTimer: function () {
       if (this._rafId) {
         cancelAnimationFrame(this._rafId);
@@ -239,6 +273,7 @@ import { boards } from './boards';
         correct: st ? st.correct : 0,
         wrong: st ? st.wrong : 0,
         started: st ? st.started : false,
+        paused: st ? st.paused : false,
         finished: st ? st.finished : false
       });
     }

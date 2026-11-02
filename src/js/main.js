@@ -34,6 +34,16 @@ import { ui } from './ui';
         startGame(config);
       },
 
+      // 暂停游戏
+      pauseGame: function () {
+        game.pauseGame();
+      },
+
+      // 恢复游戏
+      resumeGame: function () {
+        game.resumeGame();
+      },
+
       // 模式弹框“取消”、“重新开始”按钮：沿用当前配置立即重开游戏
       restart: function () {
         startGame(currentConfig);

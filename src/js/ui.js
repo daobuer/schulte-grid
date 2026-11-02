@@ -21,7 +21,13 @@ import { game } from './game';
 
     /**
      * 缓存 DOM 并绑定按钮 / 遮罩 / 键盘事件（仅调用一次）。
-     * @param {{confirm:function, restart:function, getConfig:function}} handlers
+     * @param {{
+     *   confirm:function,
+     *   pauseGame: function,
+     *   resumeGame: function,
+     *   restart:function,
+     *   getConfig:function
+     * }} handlers
      */
     init: function (handlers) {
       this.handlers = handlers;
@@ -115,6 +121,7 @@ import { game } from './game';
       this._renderTypeOptions();
       this.els.sizeTip.hidden = !small;
       this.els.modeModal.hidden = false;
+      this.handlers.pauseGame && this.handlers.pauseGame();
     },
 
     /** 关闭模式弹框 */
@@ -122,10 +129,10 @@ import { game } from './game';
       this.els.modeModal.hidden = true;
     },
 
-    /** 关闭模式弹框后立即启动游戏（取消，不改变当局配置） */
-    _cancelMode: function() {
+    /** 关闭模式弹框后立即恢复或重新启动游戏（取消，不改变当局配置） */
+    _cancelMode: function () {
       this._closeMode();
-      this.handlers.restart && this.handlers.restart();
+      this.handlers.resumeGame && this.handlers.resumeGame();
     },
 
     /**
